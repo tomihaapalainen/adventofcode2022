@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func main() {
+func adv1() {
 	file, _ := os.Open("input1.txt")
 
 	fileScanner := bufio.NewScanner(file)
