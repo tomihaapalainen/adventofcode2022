@@ -1,6 +1,6 @@
 package main
 
 func main() {
-	adv9a()
-	adv9b()
+	adv10a()
+	adv10b()
 }
