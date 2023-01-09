@@ -30,7 +30,8 @@ func (q *Queue) Empty() bool {
 	return len(q.data) == 0
 }
 
-func BFS(graph map[Point][]Point, start Point, end Point) {
+func BFS(grid [][]byte, graph map[Point][]Point, start Point, end Point) int {
+	highest := grid[start.r][start.c]
 	queue := Queue{}
 	visited := make(map[Point]bool)
 
@@ -40,21 +41,31 @@ func BFS(graph map[Point][]Point, start Point, end Point) {
 		path := queue.Deq()
 		last := path[len(path)-1]
 
+		if grid[last.r][last.c] > highest {
+			highest = grid[last.r][last.c]
+		}
+
 		if visited[last] {
 			continue
 		}
+
 		visited[last] = true
 
 		if last == end {
-			fmt.Println(path)
-			fmt.Println(len(path) - 1)
+			return len(path) - 1
 		}
 
 		for n := range graph[last] {
+			vis := false
 			for p := range path {
 				if graph[last][n] == path[p] {
+					vis = true
 					continue
 				}
+			}
+
+			if vis {
+				continue
 			}
 
 			newPath := []Point{}
@@ -63,6 +74,8 @@ func BFS(graph map[Point][]Point, start Point, end Point) {
 			queue.Enq(newPath)
 		}
 	}
+
+	return -1
 }
 
 func adv12a() {
@@ -87,7 +100,7 @@ func adv12a() {
 			b := grid[r][c]
 			if b == 'S' {
 				start = Point{r: r, c: c}
-				grid[r][c] = 'd'
+				grid[r][c] = 'a'
 			}
 			if b == 'E' {
 				end = Point{r: r, c: c}
@@ -102,16 +115,16 @@ func adv12a() {
 		for c := range grid[r] {
 			nbrs := []Point{}
 
-			if 0 <= r-1 && grid[r-1][c]-grid[r][c] <= 1 {
+			if 0 <= r-1 && int(grid[r-1][c])-int(grid[r][c]) <= 1 {
 				nbrs = append(nbrs, Point{r: r - 1, c: c})
 			}
-			if 0 <= c-1 && grid[r][c-1]-grid[r][c] <= 1 {
+			if 0 <= c-1 && int(grid[r][c-1])-int(grid[r][c]) <= 1 {
 				nbrs = append(nbrs, Point{r: r, c: c - 1})
 			}
-			if r+1 < len(grid) && grid[r+1][c]-grid[r][c] <= 1 {
+			if r+1 <= len(grid)-1 && int(grid[r+1][c])-int(grid[r][c]) <= 1 {
 				nbrs = append(nbrs, Point{r: r + 1, c: c})
 			}
-			if c+1 < len(grid[0]) && grid[r][c+1]-grid[r][c] <= 1 {
+			if c+1 <= len(grid[0])-1 && int(grid[r][c+1])-int(grid[r][c]) <= 1 {
 				nbrs = append(nbrs, Point{r: r, c: c + 1})
 			}
 
@@ -119,5 +132,70 @@ func adv12a() {
 		}
 	}
 
-	BFS(graph, start, end)
+	BFS(grid, graph, start, end)
+}
+
+func adv12b() {
+	file, _ := os.Open("input12.txt")
+
+	fileScanner := bufio.NewScanner(file)
+
+	fileScanner.Split(bufio.ScanLines)
+
+	grid := [][]byte{}
+
+	for fileScanner.Scan() {
+		row := strings.TrimSpace(fileScanner.Text())
+		grid = append(grid, []byte(row))
+	}
+
+	var end Point
+	starts := []Point{}
+
+	for r := range grid {
+		for c := range grid[r] {
+			b := grid[r][c]
+			if b == 'E' {
+				end = Point{r: r, c: c}
+				grid[r][c] = 'z'
+			}
+			if b == 'S' || b == 'a' {
+				grid[r][c] = 'a'
+				starts = append(starts, Point{r: r, c: c})
+			}
+		}
+	}
+
+	graph := make(map[Point][]Point)
+
+	for r := range grid {
+		for c := range grid[r] {
+			nbrs := []Point{}
+
+			if 0 <= r-1 && int(grid[r-1][c])-int(grid[r][c]) <= 1 {
+				nbrs = append(nbrs, Point{r: r - 1, c: c})
+			}
+			if 0 <= c-1 && int(grid[r][c-1])-int(grid[r][c]) <= 1 {
+				nbrs = append(nbrs, Point{r: r, c: c - 1})
+			}
+			if r+1 <= len(grid)-1 && int(grid[r+1][c])-int(grid[r][c]) <= 1 {
+				nbrs = append(nbrs, Point{r: r + 1, c: c})
+			}
+			if c+1 <= len(grid[0])-1 && int(grid[r][c+1])-int(grid[r][c]) <= 1 {
+				nbrs = append(nbrs, Point{r: r, c: c + 1})
+			}
+
+			graph[Point{r: r, c: c}] = nbrs
+		}
+	}
+
+	min := len(grid) * len(grid[0])
+	for _, start := range starts {
+		l := BFS(grid, graph, start, end)
+		if l > 0 && l < min {
+			min = l
+		}
+	}
+
+	fmt.Println(min)
 }
